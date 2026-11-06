@@ -1,14 +1,16 @@
 'use client'
-import { assets } from '@/assets/assets'
+import { useRouter } from 'next/navigation'
 import { useAppContext } from '@/context/AppContext'
+import { assets } from '@/assets/assets'
 import Image from 'next/image'
 import { useEffect } from 'react'
 
 const OrderPlaced = () => {
-
-  const { router } = useAppContext()
+  const router = useRouter()  // ← hapus kurung kurawal
+  const { clearCart } = useAppContext()
 
   useEffect(() => {
+    clearCart()
     setTimeout(() => {
       router.push('/my-orders')
     }, 5000)

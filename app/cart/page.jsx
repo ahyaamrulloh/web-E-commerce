@@ -4,12 +4,12 @@ import { assets } from "@/assets/assets";
 import OrderSummary from "@/components/OrderSummary";
 import Image from "next/image";
 import Navbar from "@/components/Navbar";
+import { useRouter } from 'next/navigation'
 import { useAppContext } from "@/context/AppContext";
 
 const Cart = () => {
-
-  const { products, router, cartItems, addToCart, updateCartQuantity, getCartCount } = useAppContext();
-
+  const { products, cartItems, addToCart, updateCartQuantity, getCartCount } = useAppContext();
+  const router = useRouter();
   return (
     <>
       <Navbar />
@@ -41,9 +41,13 @@ const Cart = () => {
               </thead>
               <tbody>
                 {Object.keys(cartItems).map((itemId) => {
-                  const product = products.find(product => product._id === itemId);
+                  // Ganti _id → id (UUID dari Supabase)
+                  const product = products.find(p => p.id === itemId);
 
                   if (!product || cartItems[itemId] <= 0) return null;
+
+                  // Pakai offer_price kalau ada, kalau tidak pakai price
+                  const harga = product.offer_price || product.price;
 
                   return (
                     <tr key={itemId}>
@@ -60,7 +64,7 @@ const Cart = () => {
                           </div>
                           <button
                             className="md:hidden text-xs text-orange-600 mt-1"
-                            onClick={() => updateCartQuantity(product._id, 0)}
+                            onClick={() => updateCartQuantity(product.id, 0)}
                           >
                             Remove
                           </button>
@@ -69,24 +73,32 @@ const Cart = () => {
                           <p className="text-gray-800">{product.name}</p>
                           <button
                             className="text-xs text-orange-600 mt-1"
-                            onClick={() => updateCartQuantity(product._id, 0)}
+                            onClick={() => updateCartQuantity(product.id, 0)}
                           >
                             Remove
                           </button>
                         </div>
                       </td>
-                      <td className="py-4 md:px-4 px-1 text-gray-600">${product.offerPrice}</td>
+                      {/* Ganti $ → Rp dan offerPrice → offer_price */}
+                      <td className="py-4 md:px-4 px-1 text-gray-600">
+                        Rp {harga.toLocaleString('id-ID')}
+                      </td>
                       <td className="py-4 md:px-4 px-1">
                         <div className="flex items-center md:gap-2 gap-1">
-                          <button onClick={() => updateCartQuantity(product._id, cartItems[itemId] - 1)}>
+                          <button onClick={() => updateCartQuantity(product.id, cartItems[itemId] - 1)}>
                             <Image
                               src={assets.decrease_arrow}
                               alt="decrease_arrow"
                               className="w-4 h-4"
                             />
                           </button>
-                          <input onChange={e => updateCartQuantity(product._id, Number(e.target.value))} type="number" value={cartItems[itemId]} className="w-8 border text-center appearance-none"></input>
-                          <button onClick={() => addToCart(product._id)}>
+                          <input
+                            onChange={e => updateCartQuantity(product.id, Number(e.target.value))}
+                            type="number"
+                            value={cartItems[itemId]}
+                            className="w-8 border text-center appearance-none"
+                          />
+                          <button onClick={() => addToCart(product.id)}>
                             <Image
                               src={assets.increase_arrow}
                               alt="increase_arrow"
@@ -95,14 +107,19 @@ const Cart = () => {
                           </button>
                         </div>
                       </td>
-                      <td className="py-4 md:px-4 px-1 text-gray-600">${(product.offerPrice * cartItems[itemId]).toFixed(2)}</td>
+                      <td className="py-4 md:px-4 px-1 text-gray-600">
+                        Rp {(harga * cartItems[itemId]).toLocaleString('id-ID')}
+                      </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
           </div>
-          <button onClick={()=> router.push('/all-products')} className="group flex items-center mt-6 gap-2 text-orange-600">
+          <button
+            onClick={() => router.push('/all-products')}
+            className="group flex items-center mt-6 gap-2 text-orange-600"
+          >
             <Image
               className="group-hover:-translate-x-1 transition"
               src={assets.arrow_right_icon_colored}
